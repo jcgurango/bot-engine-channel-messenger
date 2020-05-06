@@ -1,5 +1,5 @@
 {
-  "name": "@jcgurango/bot-engine-channel-messenger",
+  "name": "@bot-engine/channel-messenger",
   "version": "0.0.1",
   "description": "A Facebook Messenger channel for bot-engine which uses messenger-bot under the hood.",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "messenger-bot": "^2.5.0",
-    "@jcgurango/bot-engine": "0.0.3"
+    "@bot-engine/core": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^13.13.4",

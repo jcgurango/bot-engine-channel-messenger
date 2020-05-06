@@ -1,11 +1,11 @@
-# @jcgurango/bot-engine-channel-messenger
+# @bot-engine/channel-messenger
 A [bot-engine](https://github.com/jcgurango/bot-engine) channel for Facebook messenger. Postbacks are sent as quick replies.
 
 ## Installation
 Install via npm:
 
 ```
-npm install --save @jcgurango/bot-engine-channel-messenger
+npm install --save @bot-engine/channel-messenger
 ```
 
 Install from source:
@@ -21,8 +21,8 @@ npm run build
 To use the channel, you need a web server for FB to send messages and postbacks to. Then you can add the messenger middleware to it. This package uses the `messenger-bot` package internally. Here's an example using `express`.
 
 ```
-const { BotEngine } = require('@jcgurango/bot-engine');
-const MessengerChannel = require('./bot-engine-channel-messenger').default;
+const { BotEngine } = require('@bot-engine/channel-messenger');
+const MessengerChannel = require('@bot-engine/channel-messenger').default;
 const express = require('express');
 
 const messengerChannel = new MessengerChannel({

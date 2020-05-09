@@ -1,4 +1,4 @@
-import { IChannel, BotEngine, IIncomingMessage, IncomingMessageType, IStep, OutgoingMessageType, IOutgoingMessage } from '@jcgurango/bot-engine';
+import { IChannel, BotEngine, IIncomingMessage, IncomingMessageType, IStep, OutgoingMessageType, IOutgoingMessage } from '@bot-engine/core';
 import { Payload, QuickReplyPayload, MessagePayload, PostbackPayload } from 'facebook-messenger-api-types';
 import { IBotOptions } from './interfaces';
 
@@ -58,7 +58,7 @@ export default class MessengerChannel implements IChannel {
         }
 
         if (message.type === OutgoingMessageType.CUSTOM) {
-            // TODO: Implement customs
+            return message.payload;
         }
 
         return {

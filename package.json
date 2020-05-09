@@ -1,6 +1,6 @@
 {
   "name": "@bot-engine/channel-messenger",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Facebook Messenger channel for bot-engine which uses messenger-bot under the hood.",
   "main": "dist/index.js",
   "scripts": {
@@ -11,12 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "messenger-bot": "^2.5.0",
-    "@bot-engine/core": "^0.0.1"
+    "@bot-engine/core": "^0.0.2",
+    "@types/express": "^4.17.6",
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "messenger-bot": "^2.5.0"
   },
   "devDependencies": {
     "@types/node": "^13.13.4",
-    "typescript": "^3.8.3",
-    "facebook-messenger-api-types": "^1.1.0"
+    "facebook-messenger-api-types": "^1.1.0",
+    "typescript": "^3.8.3"
   }
 }

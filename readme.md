@@ -38,6 +38,8 @@ const messengerChannel = new MessengerChannel({
     app_secret: 'YOUR_APP_SECRET',
 });
 
+engine.register(messengerChannel);
+
 const app = express();
 
 app.use(messengerChannel.middleware());

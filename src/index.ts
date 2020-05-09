@@ -57,8 +57,8 @@ export default class MessengerChannel implements IChannel {
             };
         }
 
-        if (message.type === OutgoingMessageType.CUSTOM) {
-            return message.payload;
+        if (message.type === OutgoingMessageType.CUSTOM && message.payload.messenger) {
+            return message.payload.messenger;
         }
 
         return {
@@ -84,7 +84,7 @@ export default class MessengerChannel implements IChannel {
         }
 
         response.responses.forEach((response) => {
-            if (response.type === IncomingMessageType.POSTBACK) {
+            if (response.type === IncomingMessageType.POSTBACK && response.text) {
                 if (!lastMessage.quick_replies) {
                     lastMessage.quick_replies = [];
                 }

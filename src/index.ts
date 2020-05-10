@@ -1,23 +1,42 @@
 import { IChannel, BotEngine, IIncomingMessage, IncomingMessageType, IStep, OutgoingMessageType, IOutgoingMessage } from '@bot-engine/core';
-import { Payload, QuickReplyPayload, MessagePayload, PostbackPayload } from 'facebook-messenger-api-types';
+import { Payload, QuickReplyPayload, MessagePayload, PostbackPayload, SendMessageData, SendApiMessage } from 'facebook-messenger-api-types';
 import { IBotOptions } from './interfaces';
-
-// @ts-ignore
-const Bot = require('messenger-bot');
+import axios, { AxiosInstance } from 'axios';
+import crypto from 'crypto';
 
 export default class MessengerChannel implements IChannel {
-    private bot: any;
+    options: IBotOptions;
+    processPayload: (payload: Payload) => Promise<void> = async (payload: Payload) => { };
+    client: AxiosInstance;
 
     constructor(options: IBotOptions) {
-        this.bot = new Bot(options);
+        this.options = options;
+        this.client = axios.create({
+            baseURL: 'https://graph.facebook.com/v2.6/me/messages',
+        });
+
+        this.client.interceptors.request.use((request) => {
+            return {
+                ...request,
+                params: {
+                    ...(request.params || {}),
+                    access_token: options.token,
+                },
+            };
+        });
     }
 
-    middleware() {
-        return this.bot.middleware();
+    private async sendAction(recipient: string, action: string) {
+        return this.client.post('', {
+            recipient: {
+                id: recipient,
+            },
+            sender_action: action,
+        })
     }
 
-    onError(error: Function) {
-        this.bot.on('error', error);
+    private async sendMessage(message: SendMessageData) {
+        return this.client.post('', message);
     }
 
     private parsePayload(payload: Payload): IIncomingMessage {
@@ -50,7 +69,7 @@ export default class MessengerChannel implements IChannel {
         };
     }
 
-    private parseOutgoingMessage(message: IOutgoingMessage): any {
+    private parseOutgoingMessage(message: IOutgoingMessage): SendApiMessage {
         if (message.type === OutgoingMessageType.PLAINTEXT) {
             return {
                 text: message.payload,
@@ -66,14 +85,21 @@ export default class MessengerChannel implements IChannel {
         };
     }
 
-    private async respond(response: IStep, reply: any) {
+    private async respond(recipient: string, response: IStep) {
         let lastMessage: any = {};
 
         // Create the response.
         if (response.messages.length > 0) {
             for (let i = 0; i < response.messages.length - 1; i++) {
                 const message = response.messages[i];
-                await reply(this.parseOutgoingMessage(message));
+
+                await this.sendMessage({
+                    recipient: {
+                        id: recipient,
+                    },
+                    messaging_type: 'RESPONSE',
+                    message: this.parseOutgoingMessage(message),
+                });
             }
 
             lastMessage = this.parseOutgoingMessage(response.messages[response.messages.length - 1]);
@@ -97,14 +123,22 @@ export default class MessengerChannel implements IChannel {
             }
         });
 
-        await reply(lastMessage);
+        await this.sendMessage({
+            recipient: {
+                id: recipient,
+            },
+            messaging_type: 'RESPONSE',
+            message: lastMessage,
+        });
     }
 
     start(engine: BotEngine) {
-        const handler = async (payload: Payload, reply: any, actions: any) => {
+        this.processPayload = async (payload: Payload) => {
+            let caughtError = null;
+
             try {
                 const chatId = payload.sender.id;
-                await actions.setTyping(true);
+                await this.sendAction(payload.sender.id, 'typing_on');
 
                 // Parse the message.
                 const message = this.parsePayload(payload);
@@ -114,22 +148,75 @@ export default class MessengerChannel implements IChannel {
 
                 // Respond if we need to.
                 if (response) {
-                    await this.respond(response, reply);
+                    await this.respond(payload.sender.id, response);
                 }
             } catch (e) {
-                this.bot.emit('error', e);
+                caughtError = e;
             }
 
-            await actions.setTyping(false);
-            await actions.markRead();
+            await this.sendAction(payload.sender.id, 'typing_off');
+            await this.sendAction(payload.sender.id, 'mark_seen');
+
+            if (caughtError) {
+                throw caughtError;
+            }
         };
+    }
 
-        this.bot.on('message', handler);
-        this.bot.on('postback', handler);
+    middleware() {
+        if (!this.options.verify) {
+            throw new Error('A verify token is required to use middleware.');
+        }
 
-        return () => {
-            this.bot.off('message', handler);
-            this.bot.off('postback', handler);
+        return async (req: any, res: any, next: any) => {
+            try {
+                if (req.method === 'GET') {
+                    const mode = req.query['hub.mode'];
+                    const token = req.query['hub.verify_token'];
+                    const challenge = req.query['hub.challenge'];
+
+                    if (mode === 'subscribe' && token === this.options.verify) {
+                        return res.status(200).send(challenge);
+                    }
+                }
+
+                if (req.method === 'POST') {
+                    const { body, rawBody } = req;
+
+                    // Verify the signature.
+                    if (this.options.appSecret) {
+                        const signature = req.headers['x-hub-signature'];
+                        const hmac = crypto.createHmac('sha1', this.options.appSecret.toString());
+                        hmac.update(rawBody);
+              
+                        if (signature !== `sha1=${hmac.digest('hex')}`) {
+                          return res.end(JSON.stringify({
+                              status: 'not ok',
+                              error: 'Message integrity check failed',
+                        }));
+                        }
+                    }
+
+                    if (body && body.object && body.object === 'page') {
+                        // Parse the payload.
+                        await Promise.all(
+                            body.entry.map(async (entry: any) => {
+                                if (entry.messaging) {
+                                    return Promise.all(entry.messaging.map((async (message: Payload) => {
+                                        await this.processPayload(message);
+                                    })));
+                                }
+                            })
+                        );
+
+                        return res.status(200).end();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            next();
         };
     }
 }

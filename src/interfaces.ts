@@ -6,9 +6,9 @@ export interface IBotOptions {
     /**
      * The verify token to use.
      */
-    verify: String,
+    verify?: String,
     /**
      * The FB app secret.
      */
-    app_secret: String,
+    appSecret?: String,
 }

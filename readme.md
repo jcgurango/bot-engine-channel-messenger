@@ -18,7 +18,7 @@ npm run build
 ```
 
 ## Usage
-To use the channel, you need a web server for FB to send messages and postbacks to. Then you can add the messenger middleware to it. This package uses the `messenger-bot` package internally. Here's an example using `express`.
+To use the channel, you need a web server for FB to send messages and postbacks to. Then you can add the messenger middleware to it. Here's an example using `express`.
 
 ```
 const { BotEngine, InMemorySessionManager } = require('@bot-engine/core');
@@ -35,7 +35,7 @@ const express = require('express');
 const messengerChannel = new MessengerChannel({
     token: 'YOUR_TOKEN',
     verify: 'YOUR_VERIFICATION_TOKEN',
-    app_secret: 'YOUR_APP_SECRET',
+    appSecret: 'YOUR_APP_SECRET',
 });
 
 engine.register(messengerChannel);

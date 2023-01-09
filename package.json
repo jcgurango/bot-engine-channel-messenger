@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^13.13.4",
-    "serverless-offline": "^6.1.5",
+    "serverless-offline": "^12.0.4",
     "typescript": "^3.8.3"
   }
 }
